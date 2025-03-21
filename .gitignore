@@ -1,0 +1,6 @@
+.env
+.idea
+./microservice-apiari/Dockerfile
+./microservice-auth/Dockerfile
+./microservice-backoffice/Dockerfile
+./la-casa-del-miele/Dockerfile
