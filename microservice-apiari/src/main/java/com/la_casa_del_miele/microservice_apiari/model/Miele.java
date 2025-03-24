@@ -17,9 +17,6 @@ public class Miele {
         return id;
     }
 
-    public void setId(long id) {
-        this.id = id;
-    }
 
     public String getTipo() {
         return tipo;

@@ -24,7 +24,7 @@ public class CollocazioneServiceImpl implements CollocazioneService{
     @Override
     public Collocazione getCollocazioneById(long id){
        return collocazioneRepository.findById(id)
-               .orElseThrow(() -> new RuntimeException("Apicoltore non trovato con id: " + id));
+               .orElseThrow(() -> new RuntimeException("Collocazione non trovata con id: " + id));
     }
 
     @Override
@@ -33,8 +33,15 @@ public class CollocazioneServiceImpl implements CollocazioneService{
     }
 
     @Override
-    public Collocazione updateCollocazione(Collocazione collocazione) {
-        return null;
+    public Collocazione updateCollocazione(Long id,Collocazione vecchiaCollocazione) {
+        Collocazione nuovaCollocazione = collocazioneRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Collocazione non trovata con id: " + id));
+        nuovaCollocazione.setComune(vecchiaCollocazione.getComune());
+        nuovaCollocazione.setLocalita(vecchiaCollocazione.getLocalita());
+        nuovaCollocazione.setProvincia(vecchiaCollocazione.getProvincia());
+        nuovaCollocazione.setRegione(vecchiaCollocazione.getRegione());
+
+        return collocazioneRepository.save(nuovaCollocazione);
     }
 
     @Override

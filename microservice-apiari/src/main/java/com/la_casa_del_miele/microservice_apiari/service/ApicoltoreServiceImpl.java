@@ -50,7 +50,7 @@ public class ApicoltoreServiceImpl implements ApicoltoreService{
     }
 
     @Override
-    public void deleteApicoltore(Long id) {
+    public void deleteApicoltoreById(Long id) {
         apicoltoreRepository.deleteById(id);
     }
 }

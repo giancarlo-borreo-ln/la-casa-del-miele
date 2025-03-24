@@ -11,7 +11,7 @@ public interface CollocazioneService {
 
     Collocazione createCollocazione(Collocazione collocazione);
 
-    Collocazione updateCollocazione(Collocazione collocazione);
+    Collocazione updateCollocazione(Long id, Collocazione collocazione);
 
     void deleteCollocazione(long id);
 

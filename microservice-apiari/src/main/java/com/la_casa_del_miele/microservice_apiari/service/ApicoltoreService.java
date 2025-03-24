@@ -13,5 +13,5 @@ public interface ApicoltoreService {
 
     Apicoltore updateApicoltore(Long id, Apicoltore apicoltore);
 
-    void deleteApicoltore(Long id);
+    void deleteApicoltoreById(Long id);
 }

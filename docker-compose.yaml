@@ -75,6 +75,8 @@ services:
 volumes:
   mysql_data:
 
+
+
 networks:
   apiario_net:
     driver: bridge

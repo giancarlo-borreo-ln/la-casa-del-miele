@@ -58,7 +58,7 @@ public class ApicoltoreController {
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteApicoltore(@PathVariable Long id) {
         try {
-            apicoltoreService.deleteApicoltore(id);
+            apicoltoreService.deleteApicoltoreById(id);
             return ResponseEntity.noContent().build();
         } catch (RuntimeException e) {
             return ResponseEntity.notFound().build();
