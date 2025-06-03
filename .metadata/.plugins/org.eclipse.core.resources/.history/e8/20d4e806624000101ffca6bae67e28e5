@@ -1,0 +1,7 @@
+package com.la_casa_del_miele.microservice_backoffice.service;
+
+import com.la_casa_del_miele.microservice_backoffice.model.Admin;
+
+public interface AdminService {
+    Admin registerNewAdmin(AdminDto adminDto) throws Exception;
+}
