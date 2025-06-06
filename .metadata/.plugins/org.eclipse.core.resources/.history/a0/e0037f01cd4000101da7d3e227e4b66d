@@ -1,0 +1,58 @@
+package com.la_casa_del_miele.microservice_auth.config;
+
+import com.la_casa_del_miele.microservice_auth.model.Role;
+import com.la_casa_del_miele.microservice_auth.model.User;
+import com.la_casa_del_miele.microservice_auth.repository.RoleRepository;
+import com.la_casa_del_miele.microservice_auth.repository.UserRepository;
+import org.springframework.boot.CommandLineRunner;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.security.crypto.password.PasswordEncoder;
+
+import java.util.HashSet;
+import java.util.Set;
+
+@Component
+public class DataInitializer implements CommandLineRunner {
+
+    private final UserRepository  userRepository;
+    private final RoleRepository  roleRepository;
+    private final PasswordEncoder passwordEncoder;
+
+    public DataInitializer(UserRepository userRepository,
+                           RoleRepository roleRepository,
+                           PasswordEncoder passwordEncoder) {
+        this.userRepository  = userRepository;
+        this.roleRepository  = roleRepository;
+        this.passwordEncoder = passwordEncoder;
+    }
+
+    @Override
+    @Transactional          // un’unica transazione comoda per i test
+    public void run(String... args) {
+
+        if (userRepository.count() == 0) {
+
+            // 1. ruolo “ROLE_USER” (se non esiste lo creiamo)
+            Role roleUser = roleRepository.findByName("ROLE_USER")
+                    .orElseGet(() -> {
+                        Role r = new Role();
+                        r.setName("ROLE_USER");
+                        return roleRepository.save(r);
+                    });
+
+            // 2. utente di default
+            User admin = new User();
+            admin.setEmail("admin@admin.com");
+            admin.setFirstName("Admin");          //  <<<<<<<<<< obbligatorio
+            admin.setLastName("Root");            //  <<<<<<<<<< obbligatorio
+            admin.setPassword(passwordEncoder.encode("1234"));
+
+            Set<Role> roles = new HashSet<>();
+            roles.add(roleUser);
+            admin.setRoles(roles);
+
+            userRepository.save(admin);
+        }
+    }
+}

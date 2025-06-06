@@ -1,0 +1,38 @@
+package com.la_casa_del_miele.microservice_apiari.config;
+
+import java.io.InputStream;
+import java.security.KeyFactory;
+import java.security.interfaces.RSAPublicKey;
+import java.security.spec.X509EncodedKeySpec;
+import java.util.Base64;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
+
+@Configuration
+public class JwtConfig {
+
+    @Bean
+    public JwtDecoder jwtDecoder() throws Exception {
+        RSAPublicKey publicKey = loadPublicKey("/public.pem"); // Usa lo stesso file!
+        return NimbusJwtDecoder.withPublicKey(publicKey).build();
+    }
+
+    private RSAPublicKey loadPublicKey(String path) throws Exception {
+        try (InputStream inputStream = getClass().getResourceAsStream(path)) {
+            if (inputStream == null) {
+                throw new RuntimeException("Public key file not found: " + path);
+            }
+            String key = new String(inputStream.readAllBytes())
+                    .replaceAll("-----BEGIN (.*)-----", "")
+                    .replaceAll("-----END (.*)----", "")
+                    .replaceAll("\\s", "");
+
+            byte[] keyBytes = Base64.getDecoder().decode(key);
+            X509EncodedKeySpec spec = new X509EncodedKeySpec(keyBytes);
+            return (RSAPublicKey) KeyFactory.getInstance("RSA").generatePublic(spec);
+        }
+    }
+}

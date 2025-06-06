@@ -1,0 +1,32 @@
+package com.la_casa_del_miele.microservice_auth.security;
+
+import java.util.Optional;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.userdetails.*;
+import org.springframework.stereotype.Service;
+
+import com.la_casa_del_miele.microservice_auth.model.User;
+import com.la_casa_del_miele.microservice_auth.repository.UserRepository;
+
+/**
+ * Carica l’utente dal database al momento del login.
+ */
+@Service
+public class CustomUserDetailsService implements UserDetailsService {
+
+    private final UserRepository userRepository;
+
+    @Autowired
+    public CustomUserDetailsService(UserRepository userRepository) {
+        this.userRepository = userRepository;
+    }
+
+    @Override
+    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
+        Optional<User> opt = userRepository.findByEmail(email);
+        User user = opt.orElseThrow(
+                () -> new UsernameNotFoundException("Utente non trovato con email: " + email));
+        return new CustomUserDetails(user);
+    }
+}

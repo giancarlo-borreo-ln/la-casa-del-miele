@@ -1,0 +1,61 @@
+package com.la_casa_del_miele.microservice_apiari.service;
+
+import java.nio.file.AccessDeniedException;
+import java.util.List;
+
+import org.springframework.stereotype.Service;
+
+import com.la_casa_del_miele.microservice_apiari.model.Apiario;
+import com.la_casa_del_miele.microservice_apiari.repository.ApiarioRepository;
+
+@Service
+public class ApiarioServiceImpl implements ApiarioService{
+    private final ApiarioRepository apiarioRepository;
+
+    public ApiarioServiceImpl(ApiarioRepository apiarioRepository){
+        this.apiarioRepository =  apiarioRepository;
+    }
+
+
+    @Override
+    public List<Apiario> getAllApiari() {
+        return apiarioRepository.findAll();
+    }
+
+    @Override
+    public Apiario getApiarioById(Long id) {
+        return apiarioRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Apiario non trovato con id: " + id));
+    }
+
+    @Override
+    public Apiario createApiario(Apiario apiario) {
+        return apiarioRepository.save(apiario);
+    }
+
+    @Override
+    public Apiario updateApiario(Long id, Apiario apiario) {
+        Apiario apiarioEsistente = apiarioRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Apiario non trovato con id: " + id));
+
+        Long authenticatedApicoltoreId = getAuthenticatedApicoltoreId();
+        if (!apiarioEsistente.getApicoltore().getId().equals(authenticatedApicoltoreId)) {
+            throw new AccessDeniedException("Non sei autorizzato a modificare questo apiario");
+        }
+
+        apiarioEsistente.setAnno(apiario.getAnno());
+        apiarioEsistente.setApicoltore(apiario.getApicoltore());
+        apiarioEsistente.setCollocazione(apiario.getCollocazione());
+        apiarioEsistente.setMiele(apiario.getMiele());
+        apiarioEsistente.setNumArnie(apiario.getNumArnie());
+        apiarioEsistente.setQta(apiario.getQta());
+
+        return apiarioRepository.save(apiarioEsistente);
+    }
+
+
+    @Override
+    public void deleteApiarioById(Long id) {
+        apiarioRepository.deleteById(id);
+    }
+}

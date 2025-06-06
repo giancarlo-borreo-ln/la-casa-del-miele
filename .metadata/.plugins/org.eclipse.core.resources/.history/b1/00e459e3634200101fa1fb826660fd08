@@ -1,0 +1,42 @@
+package com.la_casa_del_miele.microservice_apiari.config;
+
+import java.io.InputStream;
+import java.security.KeyFactory;
+import java.security.interfaces.RSAPublicKey;
+import java.security.spec.X509EncodedKeySpec;
+import java.util.Base64;
+
+import org.springframework.context.annotation.Bean; // Ri-aggiungi @Bean qui
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
+
+@Configuration
+public class JwtConfig {
+
+    // Questo è il metodo che crea la chiave pubblica. Va bene che sia private.
+    private RSAPublicKey loadPublicKey(String path) throws Exception {
+        try (InputStream inputStream = getClass().getResourceAsStream(path)) {
+            if (inputStream == null) {
+                // Questo errore è probabile se public.pem non è nella directory giusta in resources
+                throw new RuntimeException("Public key file not found in classpath: " + path);
+            }
+            String key = new String(inputStream.readAllBytes())
+                    .replaceAll("-----BEGIN (.*)-----", "")
+                    .replaceAll("-----END (.*)----", "")
+                    .replaceAll("\\s", "");
+
+            byte[] keyBytes = Base64.getDecoder().decode(key);
+            X509EncodedKeySpec spec = new X509EncodedKeySpec(keyBytes);
+            return (RSAPublicKey) KeyFactory.getInstance("RSA").generatePublic(spec);
+        }
+    }
+
+    // ************ AGGIUNGI QUESTO BEAN PER IL JWTDECODER ************
+    @Bean
+    public JwtDecoder jwtDecoder() throws Exception {
+        // Usa il metodo loadPublicKey che hai già definito
+        RSAPublicKey publicKey = loadPublicKey("/public.pem"); // Assicurati che public.pem sia in src/main/resources
+        return NimbusJwtDecoder.withPublicKey(publicKey).build();
+    }
+}

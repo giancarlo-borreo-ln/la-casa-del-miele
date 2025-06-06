@@ -1,0 +1,35 @@
+<div class="dashboard">
+  <h1 class="dashboard-title">Benvenuto Super Admin!</h1>
+  <p class="dashboard-subtitle">
+    Qui puoi gestire tutti gli amministratori.
+  </p>
+
+  <div class="admin-list-container">
+    <table class="admin-table">
+      <thead>
+        <tr>
+          <th>Nome</th>
+          <th>Email</th>
+          <th>Ruolo</th>
+          <th>Azioni</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Esempio di iterazione -->
+        <tr *ngFor="let admin of admins">
+          <td>{{ admin.nome }}</td>
+          <td>{{ admin.email }}</td>
+          <td>{{ admin.ruolo }}</td>
+          <td>
+            <button class="edit-button" (click)="editAdmin(admin)">Modifica</button>
+            <button class="delete-button" (click)="deleteAdmin(admin.id)">Elimina</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="dashboard-buttons">
+    <a routerLink="/dashboard" class="dashboard-button logout-button">Torna alla Dashboard</a>
+  </div>
+</div>

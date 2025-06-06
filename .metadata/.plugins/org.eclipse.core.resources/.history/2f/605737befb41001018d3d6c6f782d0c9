@@ -1,0 +1,38 @@
+package com.la_casa_del_miele.microservice_auth.service;
+
+import java.util.List;
+import java.util.stream.Collectors;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.la_casa_del_miele.microservice_backoffice.dto.RoleDto;
+import com.la_casa_del_miele.microservice_backoffice.dto.RoleRequestDto;
+import com.la_casa_del_miele.microservice_backoffice.model.Role;
+import com.la_casa_del_miele.microservice_backoffice.repository.RoleRepository;
+
+@Service
+public class RoleServiceImpl implements RoleService {
+
+    private final RoleRepository roleRepository;
+
+    @Autowired
+    public RoleServiceImpl(RoleRepository roleRepository) {
+        this.roleRepository = roleRepository;
+    }
+
+    @Override
+    public Role createRole(RoleRequestDto roleRequestDto) {
+        Role role = new Role();
+        role.setName(roleRequestDto.getName());
+        return roleRepository.save(role);
+    }
+
+    @Override
+    public List<RoleDto> getAllRoles() {
+        List<Role> roles = roleRepository.findAll();
+        return roles.stream()
+                .map(role -> new RoleDto(role.getId(), role.getName()))
+                .collect(Collectors.toList());
+    }
+}

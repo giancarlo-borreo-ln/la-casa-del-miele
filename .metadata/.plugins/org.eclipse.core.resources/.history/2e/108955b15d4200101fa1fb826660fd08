@@ -1,0 +1,74 @@
+package com.la_casa_del_miele.microservice_auth.config;
+
+import java.io.InputStream; // Importa InputStream
+import java.security.KeyFactory;
+import java.security.interfaces.RSAPrivateKey;
+import java.security.interfaces.RSAPublicKey;
+import java.security.spec.PKCS8EncodedKeySpec;
+import java.security.spec.X509EncodedKeySpec;
+import java.util.Base64;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.oauth2.jwt.JwtEncoder;
+import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
+
+import com.nimbusds.jose.jwk.JWKSet;
+import com.nimbusds.jose.jwk.RSAKey;
+import com.nimbusds.jose.jwk.source.ImmutableJWKSet;
+import com.nimbusds.jose.jwk.source.JWKSource;
+import com.nimbusds.jose.proc.SecurityContext;
+
+@Configuration
+public class JwtConfig {
+
+    // Non sono più necessari gli @Value se i file sono in src/main/resources e li carichi con getResourceAsStream
+
+    @Bean
+    public JwtEncoder jwtEncoder() throws Exception {
+        // Carica la chiave privata e pubblica dal classpath
+        RSAPrivateKey privateKey = loadPrivateKey("/private.pem"); // Il prefisso '/' indica la root del classpath
+        RSAPublicKey publicKey = loadPublicKey("/public.pem");     // Il prefisso '/' indica la root del classpath
+
+        RSAKey rsaKey = new RSAKey.Builder(publicKey)
+                .privateKey(privateKey)
+                .build();
+
+        JWKSource<SecurityContext> jwkSource = new ImmutableJWKSet<>(new JWKSet(rsaKey));
+        return new NimbusJwtEncoder(jwkSource);
+    }
+
+    private RSAPrivateKey loadPrivateKey(String path) throws Exception {
+        // Usa getClass().getResourceAsStream() per leggere dal classpath
+        try (InputStream inputStream = getClass().getResourceAsStream(path)) {
+            if (inputStream == null) {
+                throw new RuntimeException("Private key file not found in classpath: " + path);
+            }
+            String key = new String(inputStream.readAllBytes())
+                    .replaceAll("-----BEGIN (.*)-----", "")
+                    .replaceAll("-----END (.*)----", "")
+                    .replaceAll("\\s", "");
+
+            byte[] keyBytes = Base64.getDecoder().decode(key);
+            PKCS8EncodedKeySpec spec = new PKCS8EncodedKeySpec(keyBytes);
+            return (RSAPrivateKey) KeyFactory.getInstance("RSA").generatePrivate(spec);
+        }
+    }
+
+    private RSAPublicKey loadPublicKey(String path) throws Exception {
+        // Usa getClass().getResourceAsStream() per leggere dal classpath
+        try (InputStream inputStream = getClass().getResourceAsStream(path)) {
+            if (inputStream == null) {
+                throw new RuntimeException("Public key file not found in classpath: " + path);
+            }
+            String key = new String(inputStream.readAllBytes())
+                    .replaceAll("-----BEGIN (.*)-----", "")
+                    .replaceAll("-----END (.*)----", "")
+                    .replaceAll("\\s", "");
+
+            byte[] keyBytes = Base64.getDecoder().decode(key);
+            X509EncodedKeySpec spec = new X509EncodedKeySpec(keyBytes);
+            return (RSAPublicKey) KeyFactory.getInstance("RSA").generatePublic(spec);
+        }
+    }
+}
