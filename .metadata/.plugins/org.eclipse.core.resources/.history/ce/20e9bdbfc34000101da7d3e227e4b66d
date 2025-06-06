@@ -1,0 +1,48 @@
+package com.la_casa_del_miele.microservice_auth.service;
+
+import java.time.Instant;
+
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.oauth2.jwt.*;
+import org.springframework.stereotype.Service;
+
+import java.util.stream.Collectors;
+
+@Service
+public class JwtTokenService {
+
+    private final long expirySeconds = 3600L;
+
+    private final JwtEncoder jwtEncoder;
+
+    public JwtTokenService(JwtEncoder jwtEncoder) {
+        this.jwtEncoder = jwtEncoder;
+    }
+
+    /** Crea il JWT per l’utente autenticato */
+    public String generateToken(Authentication authentication) {
+
+        Instant now = Instant.now();
+
+        String scope = authentication.getAuthorities().stream()
+                         .map(GrantedAuthority::getAuthority)
+                         .collect(Collectors.joining(" "));
+
+        JwtClaimsSet claims = JwtClaimsSet.builder()
+                .issuer("la-casa-del-miele")
+                .issuedAt(now)
+                .expiresAt(now.plusSeconds(expirySeconds))
+                .subject(authentication.getName())
+                .claim("scope", scope)
+                .build();
+
+        return jwtEncoder.encode(JwtEncoderParameters.from(claims))
+                         .getTokenValue();
+    }
+
+    /** Ritorna i secondi di validità del token – usato dal controller per il client */
+    public long getExpirySeconds() {
+        return expirySeconds;
+    }
+}

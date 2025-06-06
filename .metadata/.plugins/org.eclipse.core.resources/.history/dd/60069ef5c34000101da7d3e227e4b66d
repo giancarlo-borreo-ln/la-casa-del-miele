@@ -1,0 +1,15 @@
+package com.la_casa_del_miele.microservice_auth.service;
+
+import com.la_casa_del_miele.microservice_auth.model.User;
+
+import java.util.List;
+import java.util.Optional;
+
+public interface UserService {
+    User saveUser(User user);
+    Optional<User> findById(Long id);
+    Optional<User> findByEmail(String email);
+    List<User> findAllUsers();
+    void deleteUser(Long id);
+	void changePassword(Long userId, String oldRawPassword, String newRawPassword);
+}

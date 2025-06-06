@@ -1,0 +1,66 @@
+package com.la_casa_del_miele.microservice_auth.config;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
+// Rimuovi questi import se non usati altrove
+// import org.springframework.security.oauth2.jwt.JwtDecoder;
+// import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
+// import javax.crypto.SecretKey;
+// import javax.crypto.spec.SecretKeySpec;
+// import java.nio.charset.StandardCharsets;
+
+
+import org.springframework.security.web.SecurityFilterChain;
+
+import com.la_casa_del_miele.microservice_auth.security.CustomUserDetailsService;
+
+@Configuration
+@EnableWebSecurity
+public class SecurityConfig {
+
+    private final CustomUserDetailsService userDetailsService;
+
+    public SecurityConfig(CustomUserDetailsService userDetailsService) { 
+        this.userDetailsService = userDetailsService;
+    }
+
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        http
+            .cors(cors -> cors.configurationSource(corsConfigurationSource()))  // <<--- AGGIUNGI QUESTO
+            .csrf(csrf -> csrf.disable())
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/api/auth/login", "/api/auth/register").permitAll()
+                .anyRequest().authenticated())
+            .sessionManagement(sess ->
+                sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .userDetailsService(userDetailsService);
+
+        return http.build();
+    }
+
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        configuration.setAllowedOrigins(List.of("http://localhost:4200"));
+        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        configuration.setAllowedHeaders(List.of("*"));
+        configuration.setAllowCredentials(true);
+        configuration.setExposedHeaders(List.of("Authorization", "Content-Type"));
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
+    }
+
+    @Bean
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration config)
+            throws Exception {
+        return config.getAuthenticationManager();
+    }
+}

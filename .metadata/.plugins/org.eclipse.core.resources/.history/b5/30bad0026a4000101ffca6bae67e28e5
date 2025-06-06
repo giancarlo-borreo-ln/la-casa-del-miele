@@ -1,5 +1,0 @@
-package com.la_casa_del_miele.microservice_backoffice.config;
-
-public class PasswordConfig {
-
-}

@@ -1,0 +1,59 @@
+.dashboard {
+  display: flex;
+  flex-direction: column; /* Arrange items vertically */
+  justify-content: center; /* Center vertically */
+  align-items: center;     /* Center horizontally */
+  min-height: 100vh;       /* Take full viewport height */
+  background-color: #f0f4f8; /* Light background color */
+  font-family: 'Arial', sans-serif;
+  text-align: center;      /* Center text */
+  padding: 20px;
+  box-sizing: border-box; /* Include padding in element's total width and height */
+}
+
+.dashboard-title {
+  color: #333;
+  font-size: 2.8em;
+  margin-bottom: 15px;
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+}
+
+.dashboard-subtitle {
+  color: #555;
+  font-size: 1.4em;
+  margin-bottom: 40px;
+  max-width: 600px;
+  line-height: 1.5;
+}
+
+.dashboard-buttons {
+  margin-top: 20px;
+}
+
+.dashboard-button {
+  display: inline-block;
+  padding: 15px 30px;
+  font-size: 1.2em;
+  font-weight: bold;
+  color: #fff;
+  background-color: #ff9800;
+  border: none;
+  border-radius: 8px;
+  text-decoration: none; 
+  transition: background-color 0.3s ease, transform 0.2s ease;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+}
+
+.dashboard-button:hover {
+  background-color: #f57c00;
+  transform: translateY(-2px);
+
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.25);
+}
+
+.dashboard-button:active {
+  background-color: #e65100;
+  transform: translateY(0);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}

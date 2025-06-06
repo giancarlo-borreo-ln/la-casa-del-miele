@@ -1,0 +1,51 @@
+import org.springframework.http.HttpMethod; // Make sure this import is present
+
+@Configuration
+@EnableWebSecurity
+public class SecurityConfig {
+
+    private final CustomUserDetailsService userDetailsService;
+
+    public SecurityConfig(CustomUserDetailsService userDetailsService) {
+        this.userDetailsService = userDetailsService;
+    }
+
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        http
+            .csrf(csrf -> csrf.disable())
+            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+            .authorizeHttpRequests(auth -> auth
+                // **CRITICAL: Permit OPTIONS requests first and broadly**
+                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() 
+                // Now define your other rules
+                .requestMatchers("/api/auth/login", "/api/auth/register").permitAll()
+                .anyRequest().authenticated() // All other requests must be authenticated
+            )
+            .sessionManagement(sess ->
+                sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .userDetailsService(userDetailsService);
+
+        return http.build();
+    }
+
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        configuration.setAllowedOrigins(List.of("http://localhost:4200"));
+        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        configuration.setAllowedHeaders(List.of("*")); // Allow all headers for simplicity in dev
+        configuration.setAllowCredentials(true);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration); // Apply to all paths
+
+        return source;
+    }
+
+    @Bean
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration config)
+            throws Exception {
+        return config.getAuthenticationManager();
+    }
+}

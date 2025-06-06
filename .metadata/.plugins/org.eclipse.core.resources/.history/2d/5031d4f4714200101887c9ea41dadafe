@@ -1,0 +1,84 @@
+package com.la_casa_del_miele.microservice_auth.controller;
+
+import com.la_casa_del_miele.microservice_auth.dto.PasswordChangeRequest;
+import com.la_casa_del_miele.microservice_auth.dto.UserProfileResponse;
+import com.la_casa_del_miele.microservice_auth.dto.UserUpdateRequest;
+import com.la_casa_del_miele.microservice_auth.model.User;
+import com.la_casa_del_miele.microservice_auth.security.CustomUserDetails;
+import com.la_casa_del_miele.microservice_auth.service.UserService;
+import com.la_casa_del_miele.microservice_auth.service.HoneyService;
+import jakarta.validation.Valid;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+@RequestMapping("/api/users")
+public class UserController {
+
+    private final UserService userService;
+    private final HoneyService honeyService; // Servizio ipotetico
+
+    public UserController(UserService userService, HoneyService honeyService) {
+        this.userService = userService;
+        this.honeyService = honeyService;
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<UserProfileResponse> getMyProfile(
+            @AuthenticationPrincipal CustomUserDetails principal) {
+        User user = userService.findById(principal.getId())
+                               .orElseThrow(() -> new IllegalStateException("Profilo non trovato"));
+        return ResponseEntity.ok(new UserProfileResponse(user));
+    }
+
+    @PutMapping("/me")
+    public ResponseEntity<Void> updateMyProfile(
+            @AuthenticationPrincipal CustomUserDetails principal,
+            @Valid @RequestBody UserUpdateRequest dto) {
+        User user = userService.findById(principal.getId())
+                               .orElseThrow(() -> new IllegalStateException("Profilo non trovato"));
+        user.setFirstName(dto.getFirstName());
+        user.setLastName(dto.getLastName());
+        userService.saveUser(user);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PutMapping("/me/password")
+    public ResponseEntity<Void> changeMyPassword(
+            @AuthenticationPrincipal CustomUserDetails principal,
+            @Valid @RequestBody PasswordChangeRequest dto) {
+        userService.changePassword(principal.getId(), dto);
+        return ResponseEntity.noContent().build();
+    }
+
+    // 🔒 SOLO SUPERADMIN: lista di tutti gli utenti (admin inclusi)
+    @GetMapping
+    @PreAuthorize("hasRole('SUPERADMIN')")
+    public ResponseEntity<?> listUsers() {
+        return ResponseEntity.ok(userService.findAllUsers());
+    }
+
+    // 🔒 SOLO ADMIN: lista degli apicoltori (ipotizziamo un metodo dedicato)
+    @GetMapping("/apicoltori")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> listBeekeepers() {
+        return ResponseEntity.ok(userService.findAllBeekeepers());
+    }
+
+    // 🔒 SOLO ADMIN: lista dei mieli prodotti (ipotizziamo un servizio honeyService)
+    @GetMapping("/mieli")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> listHoney() {
+        return ResponseEntity.ok(honeyService.findAllHoney());
+    }
+
+    // 🔒 SOLO ADMIN: elimina un utente
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
+        userService.deleteUser(id);
+        return ResponseEntity.noContent().build();
+    }
+}

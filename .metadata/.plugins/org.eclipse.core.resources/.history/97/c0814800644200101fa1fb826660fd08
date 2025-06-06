@@ -1,0 +1,64 @@
+package com.la_casa_del_miele.microservice_auth.config;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.Customizer;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
+// Rimuovi questi import se non usati altrove
+// import org.springframework.security.oauth2.jwt.JwtDecoder;
+// import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
+// import javax.crypto.SecretKey;
+// import javax.crypto.spec.SecretKeySpec;
+// import java.nio.charset.StandardCharsets;
+
+
+import org.springframework.security.web.SecurityFilterChain;
+
+import com.la_casa_del_miele.microservice_auth.security.CustomUserDetailsService;
+
+@Configuration
+@EnableWebSecurity
+public class SecurityConfig {
+
+    private final CustomUserDetailsService userDetailsService;
+
+    public SecurityConfig(CustomUserDetailsService userDetailsService) { 
+        this.userDetailsService = userDetailsService;
+    }
+
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        http
+            .csrf(csrf -> csrf.disable())
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/api/auth/login", "/api/auth/register").permitAll()
+                .anyRequest().authenticated())
+            .sessionManagement(sess ->
+                sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            // Il microservice-auth è l'Authorization Server, non un Resource Server che valida JWT con Customizer.withDefaults()
+            // Rimuovi la riga .oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()))
+            .userDetailsService(userDetailsService);
+
+        return http.build();
+    }
+
+    @Bean
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration config)
+            throws Exception {
+        return config.getAuthenticationManager();
+    }
+
+    // ************ RIMUOVI COMPLETAMENTE QUESTO BEAN ************
+    // Questo JwtDecoder è per la chiave simmetrica (jwt.secret) e non dovrebbe esistere qui.
+    // Il JwtEncoder è in JwtConfig e gestisce le chiavi RSA.
+    // @Bean
+    // public JwtDecoder jwtDecoder() {
+    //     SecretKey secretKey =
+    //         new SecretKeySpec(jwtSecret.getBytes(StandardCharsets.UTF_8), "HmacSHA256");
+    //     return NimbusJwtDecoder.withSecretKey(secretKey).build();
+    // }
+}

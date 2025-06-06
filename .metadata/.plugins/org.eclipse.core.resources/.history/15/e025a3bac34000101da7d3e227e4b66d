@@ -1,0 +1,51 @@
+package com.la_casa_del_miele.microservice_auth.service;
+
+import java.time.Instant;
+import java.util.stream.Collectors;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.oauth2.jwt.JwtClaimsSet;
+import org.springframework.security.oauth2.jwt.JwtEncoder;
+import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
+import org.springframework.stereotype.Service;
+
+@Service
+public class JwtTokenService {
+
+    private final JwtEncoder jwtEncoder;
+    
+    private static final long EXPIRATION_SECONDS = 3600L;
+
+    @Autowired
+    public JwtTokenService(JwtEncoder jwtEncoder) {
+        this.jwtEncoder = jwtEncoder;
+    }
+
+    /**
+     * Genera un token per l’utente autenticato.
+     *
+     * @param authentication l’oggetto Authentication restituito da Spring
+     * @return stringa JWT firmata
+     */
+    public String generateToken(Authentication authentication) {
+        Instant now = Instant.now();
+
+        // concateno i ruoli in “scope” -> es. "ROLE_USER ROLE_ADMIN"
+        String scope = authentication.getAuthorities().stream()
+                             .map(GrantedAuthority::getAuthority)
+                             .collect(Collectors.joining(" "));
+
+        JwtClaimsSet claims = JwtClaimsSet.builder()
+                .issuer("la-casa-del-miele")          // chi firma il token
+                .issuedAt(now)                        // iat
+                .expiresAt(now.plusSeconds(EXPIRATION_SECONDS)) // exp
+                .subject(authentication.getName())    // di solito email
+                .claim("scope", scope)                // ruoli
+                .build();
+
+        return jwtEncoder.encode(JwtEncoderParameters.from(claims))
+                         .getTokenValue();
+    }
+}

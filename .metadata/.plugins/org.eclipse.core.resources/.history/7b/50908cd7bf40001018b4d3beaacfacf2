@@ -1,0 +1,54 @@
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.Customizer;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.web.SecurityFilterChain;
+
+import com.la_casa_del_miele.microservice_auth.security.CustomUserDetailsService;
+
+@Configuration
+@EnableWebSecurity
+public class SecurityConfig {
+
+    private final CustomUserDetailsService userDetailsService;
+
+    public SecurityConfig(CustomUserDetailsService userDetailsService) {
+        this.userDetailsService = userDetailsService;
+    }
+
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+
+        http
+            /* 1. niente CSRF per API stateless */
+            .csrf(csrf -> csrf.disable())
+
+            /* 2. regole di accesso */
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/api/auth/login", "/api/auth/register").permitAll()
+                .anyRequest().authenticated())
+
+            /* 3. sessioni stateless perché lavoriamo con JWT */
+            .sessionManagement(sess ->
+                sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+
+            /* 4. JWT come resource-server */
+            .oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()))
+
+            /* 5. ***Qui colleghiamo il nostro CustomUserDetailsService*** */
+            .userDetailsService(userDetailsService);
+
+        return http.build();
+    }
+
+    @Bean
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration config)
+            throws Exception {
+        return config.getAuthenticationManager();
+    }
+}

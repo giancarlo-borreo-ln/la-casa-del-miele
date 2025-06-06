@@ -1,0 +1,30 @@
+package com.la_casa_del_miele.microservice_apiari.config;
+
+import java.io.InputStream;
+import java.security.KeyFactory;
+import java.security.interfaces.RSAPublicKey;
+import java.security.spec.X509EncodedKeySpec;
+import java.util.Base64;
+
+import org.springframework.context.annotation.Configuration; // Rimuovi @Bean qui
+
+@Configuration
+public class JwtConfig {
+
+    // Questo non è più un @Bean, ma un metodo helper
+    public RSAPublicKey loadPublicKey(String path) throws Exception {
+        try (InputStream inputStream = getClass().getResourceAsStream(path)) {
+            if (inputStream == null) {
+                throw new RuntimeException("Public key file not found in classpath: " + path);
+            }
+            String key = new String(inputStream.readAllBytes())
+                    .replaceAll("-----BEGIN (.*)-----", "")
+                    .replaceAll("-----END (.*)----", "")
+                    .replaceAll("\\s", "");
+
+            byte[] keyBytes = Base64.getDecoder().decode(key);
+            X509EncodedKeySpec spec = new X509EncodedKeySpec(keyBytes);
+            return (RSAPublicKey) KeyFactory.getInstance("RSA").generatePublic(spec);
+        }
+    }
+}

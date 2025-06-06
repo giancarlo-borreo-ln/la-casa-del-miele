@@ -1,0 +1,16 @@
+# == Identità dell\u2019app ==
+spring.application.name=microservice-auth
+
+# == Connessione al DB ==
+spring.datasource.url=jdbc:mysql://db-auth:3306/auth_db
+spring.datasource.username=root
+spring.datasource.password=root
+spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver   # opzionale, ma esplicito
+
+# == JPA / Hibernate ==
+spring.jpa.hibernate.ddl-auto=update        # crea/aggiorna le tabelle
+spring.jpa.database-platform=org.hibernate.dialect.MySQLDialect
+spring.jpa.show-sql=true                    # logga le query (solo dev)
+
+# == JWT (chiave simmetrica HMAC256) ==
+jwt.secret=una-chiave-molto-lunga-e-complessa

@@ -1,0 +1,79 @@
+package com.la_casa_del_miele.microservice_auth.controller;
+
+import com.la_casa_del_miele.microservice_auth.dto.LoginRequest;
+import com.la_casa_del_miele.microservice_auth.dto.RegisterRequest;
+import com.la_casa_del_miele.microservice_auth.dto.JwtResponse;
+import com.la_casa_del_miele.microservice_auth.model.Role;
+import com.la_casa_del_miele.microservice_auth.model.User;
+import com.la_casa_del_miele.microservice_auth.repository.RoleRepository;
+import com.la_casa_del_miele.microservice_auth.service.UserService;
+import com.la_casa_del_miele.microservice_auth.service.JwtTokenService;
+import jakarta.validation.Valid;
+import org.springframework.http.*;
+import org.springframework.security.authentication.*;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.HashSet;
+import java.util.Set;
+
+@RestController
+@RequestMapping("/api/auth")
+public class AuthController {
+
+    private final AuthenticationManager authenticationManager;
+    private final UserService userService;
+    private final RoleRepository roleRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final JwtTokenService jwtTokenService;
+
+    public AuthController(AuthenticationManager authenticationManager,
+                          UserService userService,
+                          RoleRepository roleRepository,
+                          PasswordEncoder passwordEncoder,
+                          JwtTokenService jwtTokenService) {
+        this.authenticationManager = authenticationManager;
+        this.userService = userService;
+        this.roleRepository = roleRepository;
+        this.passwordEncoder = passwordEncoder;
+        this.jwtTokenService = jwtTokenService;
+    }
+
+    @PostMapping("/register")
+    public ResponseEntity<Void> register(@Valid @RequestBody RegisterRequest dto) {
+
+        if (userService.findByEmail(dto.getEmail()).isPresent()) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).build(); 
+        }
+
+        Role roleUser = roleRepository.findByName("ROLE_USER")
+                                      .orElseGet(() -> roleRepository.save(new Role("ROLE_USER")));
+
+        User u = new User();
+        u.setEmail(dto.getEmail());
+        u.setPassword(passwordEncoder.encode(dto.getPassword()));
+        u.setFirstName(dto.getFirstName());
+        u.setLastName(dto.getLastName());
+
+        Set<Role> roles = new HashSet<>();
+        roles.add(roleUser);
+        u.setRoles(roles);
+
+        userService.saveUser(u);
+
+        return ResponseEntity.status(HttpStatus.CREATED).build();
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<JwtResponse> login(@Valid @RequestBody LoginRequest dto) {
+
+        Authentication auth = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(dto.getEmail(), dto.getPassword())
+        );
+
+        String token = jwtTokenService.generateToken(auth);
+
+        return ResponseEntity.ok(new JwtResponse(token, jwtTokenService.getExpirySeconds()));
+    }
+}

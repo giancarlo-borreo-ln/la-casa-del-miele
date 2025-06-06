@@ -1,0 +1,75 @@
+package com.la_casa_del_miele.microservice_apiari.service;
+
+import com.la_casa_del_miele.microservice_apiari.model.Apiario;
+import com.la_casa_del_miele.microservice_apiari.model.Apicoltore;
+import com.la_casa_del_miele.microservice_apiari.repository.ApiarioRepository;
+import com.la_casa_del_miele.microservice_apiari.repository.ApicoltoreRepository;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.Optional;
+
+@Service
+public class ApiarioServiceImpl implements ApiarioService {
+
+    private final ApiarioRepository apiarioRepository;
+    private final ApicoltoreRepository apicoltoreRepository;
+
+    public ApiarioServiceImpl(ApiarioRepository apiarioRepository,
+                              ApicoltoreRepository apicoltoreRepository) {
+        this.apiarioRepository = apiarioRepository;
+        this.apicoltoreRepository = apicoltoreRepository;
+    }
+
+    @Override
+    public List<Apiario> getAllApiari() {
+        return apiarioRepository.findAll();
+    }
+
+    @Override
+    public Apiario getApiarioById(Long id) {
+        return apiarioRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Apiario non trovato con id: " + id));
+    }
+
+    @Override
+    public Apiario createApiario(Apiario apiario) {
+        return apiarioRepository.save(apiario);
+    }
+
+    @Override
+    public Apiario updateApiario(Long id, Apiario apiario) {
+        Apiario apiarioEsistente = apiarioRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Apiario non trovato con id: " + id));
+
+        Long authenticatedApicoltoreId = getAuthenticatedApicoltoreId();
+        if (!apiarioEsistente.getApicoltore().getId().equals(authenticatedApicoltoreId)) {
+            throw new RuntimeException("Non sei autorizzato a modificare questo apiario");
+        }
+
+        apiarioEsistente.setAnno(apiario.getAnno());
+        apiarioEsistente.setApicoltore(apiario.getApicoltore());
+        apiarioEsistente.setCollocazione(apiario.getCollocazione());
+        apiarioEsistente.setMiele(apiario.getMiele());
+        apiarioEsistente.setNumArnie(apiario.getNumArnie());
+        apiarioEsistente.setQta(apiario.getQta());
+
+        return apiarioRepository.save(apiarioEsistente);
+    }
+
+    private Long getAuthenticatedApicoltoreId() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String email = authentication.getName();
+
+        Optional<Apicoltore> apicoltore = apicoltoreRepository.findByEmail(email);
+
+        return apicoltore.getId();
+    }
+
+    @Override
+    public void deleteApiarioById(Long id) {
+        apiarioRepository.deleteById(id);
+    }
+}

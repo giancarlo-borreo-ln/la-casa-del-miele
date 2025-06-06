@@ -1,0 +1,66 @@
+package com.la_casa_del_miele.microservice_auth.service;
+
+import java.util.List;
+import java.util.Optional;
+
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.la_casa_del_miele.microservice_auth.dto.PasswordChangeRequest;
+import com.la_casa_del_miele.microservice_auth.model.User;
+import com.la_casa_del_miele.microservice_auth.repository.UserRepository;
+
+@Service
+@Transactional
+public class UserServiceImpl implements UserService {
+
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
+
+    public UserServiceImpl(UserRepository userRepository,
+                           PasswordEncoder passwordEncoder) {
+        this.userRepository  = userRepository;
+        this.passwordEncoder = passwordEncoder;
+    }
+    @Override
+    public User saveUser(User user) {
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
+        return userRepository.save(user);
+    }
+
+    @Override
+    public Optional<User> findById(Long id) {
+        return userRepository.findById(id);
+    }
+    
+    @Override
+    public Optional<User> findByEmail(String email) {
+        return userRepository.findByEmail(email);
+    }
+
+    @Override
+    public List<User> findAllUsers() {
+        return userRepository.findAll();
+    }
+
+    @Override
+    public void deleteUser(Long id) {
+        userRepository.deleteById(id);
+    }
+
+    @Override
+    public void changePassword(Long userId, PasswordChangeRequest dto) {
+
+        User user = userRepository.findById(userId)
+                            .orElseThrow(() -> new IllegalArgumentException("Utente non trovato"));
+
+        if (!passwordEncoder.matches(dto.getOldPassword(), user.getPassword())) {
+            throw new IllegalArgumentException("La vecchia password non è corretta");
+        }
+
+        user.setPassword(passwordEncoder.encode(dto.getNewPassword()));
+        userRepository.save(user);
+    }
+   
+}
